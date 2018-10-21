@@ -1,15 +1,31 @@
 library(readr)
 library(tidyverse)
-library(tidytext)
-library(ggplot2)
+library(xgboost)
+library(text2vec)
+library(stopwords)
 
 
-train_data <- read_csv('data/train.csv')
+train <- read_csv('data/train.csv')
 
-train_words <- train_data %>%
-	unnest_tokens(word, comment_text) %>%
-	count(id, word, sort = TRUE) %>%
-	bind_tf_idf(word, id, n)
+it_train <- itoken(
+	train$comment_text,
+	ids = train$id,
+	preprocessor = tolower,
+	tokenizer = word_tokenizer)
 
-ggplot(data = train_words) +
-	geom_point(mapping = aes(x = n, y = tf_idf))
+vocabulary <- create_vocabulary(
+	it_train,
+	ngram = c(1L, 3L),
+	stopwords = stopwords('en')) %>%
+	prune_vocabulary(term_count_min = 10)
+
+dtm_train <- create_dtm(
+	it_train,
+	vocab_vectorizer(vocabulary)) %>%
+	fit_transform(TfIdf$new())
+
+model <- xgboost(
+	data = dtm_train,
+	label = train$toxic,
+	nrounds = 1000,
+	early_stopping_rounds = 10)
