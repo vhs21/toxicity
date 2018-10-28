@@ -40,6 +40,8 @@ labels <-
     'insult',
     'identity_hate')
 
+models_directory <- 'models'
+dir.create(models_directory, showWarnings = FALSE)
 
 models <- mclapply(labels, function(label) {
   model <- xgboost(
@@ -49,7 +51,7 @@ models <- mclapply(labels, function(label) {
     nrounds = 500,
     early_stopping_rounds = 5
   )
-  xgb.save(model, paste('models', label, sep = .Platform$file.sep))
+  xgb.save(model, paste(models_directory, label, sep = .Platform$file.sep))
   model
 }, mc.silent = TRUE, mc.cores = 6)
 
