@@ -5,18 +5,10 @@ library(text2vec)
 library(stopwords)
 library(parallel)
 
+source('util.R')
+
 
 train <- read_csv('data/train.csv')
-
-create_itrtr <- function(data) {
-  itoken(
-    data$comment_text,
-    ids = data$id,
-    preprocessor = tolower,
-    tokenizer = word_tokenizer,
-    progressbar = FALSE
-  )
-}
 
 itrtr_train <- create_itrtr(train)
 
@@ -29,8 +21,8 @@ vectorizer <- vocab_vectorizer(vocabulary)
 
 tfidf <- TfIdf$new()
 
-dtm_train <- create_dtm(itrtr_train, vectorizer) %>%
-  fit_transform(tfidf)
+dtm_train <- create_fit_dtm(itrtr_train, vectorizer)
+
 
 labels <-
   c('toxic',
@@ -58,8 +50,8 @@ models <- mclapply(labels, function(label) {
 
 test <- read_csv('data/test.csv')
 
-dtm_test <- create_dtm(create_itrtr(test), vectorizer) %>%
-  fit_transform(tfidf)
+dtm_test <- create_fit_dtm(create_itrtr(test), vectorizer)
 
 preds <- sapply(models, function(model)
   predict(model, dtm_test))
+
