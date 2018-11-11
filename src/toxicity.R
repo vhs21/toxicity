@@ -5,21 +5,20 @@ library(text2vec)
 library(stopwords)
 library(parallel)
 
-source('util.R')
+source('src/util.R')
 
 
 train <- read_csv('data/train.csv')
 
-itrtr_train <- create_itrtr(train)
+itrtr_train <- create_itrtr(train$comment_text, train$id)
 
 vocabulary <- create_vocabulary(itrtr_train,
                                 ngram = c(1L, 3L),
                                 stopwords = stopwords('en')) %>%
   prune_vocabulary(term_count_min = 10)
+saveRDS(vocabulary, file = 'out/vocabulary.rds')
 
 vectorizer <- vocab_vectorizer(vocabulary)
-
-tfidf <- TfIdf$new()
 
 dtm_train <- create_fit_dtm(itrtr_train, vectorizer)
 
@@ -43,15 +42,7 @@ models <- mclapply(labels, function(label) {
     nrounds = 500,
     early_stopping_rounds = 5
   )
-  xgb.save(model, paste(models_directory, label, sep = .Platform$file.sep))
+  xgb.save(model,
+           paste(models_directory, label, sep = .Platform$file.sep))
   model
 }, mc.silent = TRUE, mc.cores = 6)
-
-
-test <- read_csv('data/test.csv')
-
-dtm_test <- create_fit_dtm(create_itrtr(test), vectorizer)
-
-preds <- sapply(models, function(model)
-  predict(model, dtm_test))
-

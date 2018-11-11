@@ -1,10 +1,10 @@
 library(text2vec)
 
 
-create_itrtr <- function(data) {
+create_itrtr <- function(data, ids) {
   itoken(
-    data$comment_text,
-    ids = data$id,
+    data,
+    ids = ids,
     preprocessor = tolower,
     tokenizer = word_tokenizer,
     progressbar = FALSE
@@ -12,6 +12,6 @@ create_itrtr <- function(data) {
 }
 
 create_fit_dtm <- function(itrtr, vectorizer) {
-  create_dtm(itrtr, vectorizer) %>%
-    fit_transform(TfIdf$new)
+  tfIdf = TfIdf$new()
+  tfIdf$fit_transform(create_dtm(itrtr, vectorizer))
 }
