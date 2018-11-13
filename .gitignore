@@ -1,3 +1,5 @@
 .idea/
 target/
+
 twitter4j.properties
+train.csv
